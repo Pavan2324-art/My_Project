@@ -132,26 +132,6 @@ body {
   width: 100%;
 }
 
-/* Loading / access states */
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 50vh;
-  font-size: 1.5rem;
-  color: #1f2937;
-}
-
-.access-denied {
-  text-align: center;
-  padding: 3rem;
-  background: #ffffff;
-  border-radius: 16px;
-  color: #b91c1c;
-  font-size: 1.1rem;
-  border: 1px solid #fee2e2;
-}
-
 /* ===== Welcome & Auth Cards ===== */
 .auth-card,
 .welcome-card {
@@ -239,7 +219,7 @@ body {
   transform: translateY(-1px);
 }
 
-/* Alerts for auth messages */
+/* Alerts */
 .alert {
   padding: 0.6rem 0.8rem;
   border-radius: 6px;
@@ -280,7 +260,7 @@ body {
   background: linear-gradient(90deg, #2563eb, #38bdf8);
 }
 
-/* ===== Dashboard Cards (Home) ===== */
+/* ===== Dashboard Cards ===== */
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(260px, 1fr));
@@ -331,7 +311,6 @@ body {
   font-weight: 600;
 }
 
-/* Icon color variants */
 .dash-card.blue .dash-icon {
   background: #2563eb;
 }
@@ -344,7 +323,56 @@ body {
   background: #16a34a;
 }
 
-/* ===== Tables (Student & Admin) ===== */
+/* ===== Student Scholarship Layout ===== */
+.student-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.student-filters {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 1.2rem 1rem;
+  border: 1px solid #d1e3ff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.student-filters h3 {
+  font-size: 1rem;
+  margin-bottom: 0.8rem;
+  color: #111827;
+}
+
+.student-filters select,
+.student-filters input {
+  width: 100%;
+  margin-bottom: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  font-size: 0.9rem;
+  background: #f9fafb;
+}
+
+.student-filters input::placeholder {
+  color: #9ca3af;
+}
+
+.student-filters select:focus,
+.student-filters input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px #2563eb33;
+  background: #ffffff;
+}
+
+.student-scholarships {
+  width: 100%;
+}
+
+/* ===== Tables ===== */
 .table-container {
   background: #ffffff;
   border-radius: 12px;
@@ -536,6 +564,74 @@ body {
   transform: translateY(-1px);
 }
 
+/* Admin announcements textarea */
+.admin-textarea {
+  margin-top: 0.7rem;
+  width: 100%;
+  min-height: 80px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+  resize: vertical;
+}
+
+/* ===== Apply Form Card ===== */
+.apply-form-card {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 1.4rem 1.3rem;
+  max-width: 520px;
+  margin: 1.5rem auto 2rem;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  border: 1px solid #d1e3ff;
+}
+
+.apply-form-card h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0.8rem;
+  color: #111827;
+}
+
+.apply-form-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.apply-form-card input {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.65rem 0.8rem;
+  font-size: 0.9rem;
+  background: #f9fafb;
+}
+
+.apply-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+}
+
+.apply-form-actions button[type="button"] {
+  padding: 0.45rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  cursor: pointer;
+}
+
+.apply-form-actions button[type="submit"] {
+  padding: 0.45rem 1.1rem;
+  border-radius: 6px;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 /* ===== Profile Page ===== */
 .profile-page h2 {
   font-size: 1.4rem;
@@ -561,6 +657,55 @@ body {
 
 .profile-row strong {
   width: 70px;
+  color: #4b5563;
+}
+
+/* ===== Info / Static Pages (How to Apply, FAQ, Contact) ===== */
+.info-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.8rem 1.7rem;
+  max-width: 900px;
+  margin: 1.5rem auto 2rem;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  border: 1px solid #d1e3ff;
+}
+
+.steps-list {
+  margin-left: 1.2rem;
+  margin-top: 0.3rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+  color: #111827;
+}
+
+.steps-list li {
+  padding-left: 0.2rem;
+}
+
+.info-note {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+/* FAQs */
+.faq-item {
+  margin-bottom: 1rem;
+}
+
+.faq-item h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.2rem;
+}
+
+.faq-item p {
+  font-size: 0.92rem;
   color: #4b5563;
 }
 
@@ -639,7 +784,11 @@ body {
     padding: 1.5rem 1.3rem;
   }
 
-  .dashboard-grid {
+  .student-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-grid {
     grid-template-columns: 1fr;
   }
 }

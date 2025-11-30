@@ -16,17 +16,66 @@ function App() {
   const [authSuccess, setAuthSuccess] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
 
+  // Scholarships (Odisha-style: dept + level)
   const [scholarships, setScholarships] = useState([
-    { id: 1, name: "Merit Scholarship", amount: 2000, deadline: "2025-12-31" },
-    { id: 2, name: "Need-Based Scholarship", amount: 1500, deadline: "2025-11-30" },
+    {
+      id: 1,
+      name: "Merit Scholarship",
+      amount: 2000,
+      deadline: "2025-12-31",
+      department: "Higher Education",
+      level: "UG",
+    },
+    {
+      id: 2,
+      name: "Need-Based Scholarship",
+      amount: 1500,
+      deadline: "2025-11-30",
+      department: "ST & SC Dev.",
+      level: "UG",
+    },
   ]);
 
   const [applications, setApplications] = useState([]);
+
   const [newScholarship, setNewScholarship] = useState({
     name: "",
     amount: "",
     deadline: "",
+    department: "",
+    level: "",
   });
+
+  // Announcements
+  const [announcements, setAnnouncements] = useState([
+    {
+      id: 1,
+      title: "Scholarship portal open for AY 2025-26",
+      date: "2025-11-15",
+      content: "Students can apply for listed scholarships till 31 December 2025.",
+    },
+  ]);
+
+  const [newAnnouncement, setNewAnnouncement] = useState({
+    title: "",
+    date: "",
+    content: "",
+  });
+
+  // Student application form (extra details)
+  const [applicationForm, setApplicationForm] = useState({
+    scholarshipId: "",
+    course: "",
+    institute: "",
+    bankAccount: "",
+    ifsc: "",
+  });
+  const [showApplyForm, setShowApplyForm] = useState(false);
+
+  // Filters for scholarship list
+  const [filterDept, setFilterDept] = useState("");
+  const [filterLevel, setFilterLevel] = useState("");
+  const [search, setSearch] = useState("");
 
   // Restore user from localStorage
   useEffect(() => {
@@ -127,31 +176,7 @@ function App() {
     setPage("welcome");
   };
 
-  // -------- APPLY FOR SCHOLARSHIP (STUDENT) --------
-  const applyForScholarship = (id) => {
-    if (!currentUser) return;
-
-    if (
-      applications.some(
-        (a) => a.studentId === currentUser.email && a.scholarshipId === id
-      )
-    ) {
-      alert("Already applied");
-      return;
-    }
-
-    setApplications([
-      ...applications,
-      {
-        id: Date.now(),
-        studentId: currentUser.email,
-        scholarshipId: id,
-        status: "Pending",
-      },
-    ]);
-    alert("Application submitted!");
-  };
-
+  // -------- STUDENT APPLY FLOW --------
   const calculateDaysLeft = (deadline) => {
     const d = new Date(deadline);
     const today = new Date();
@@ -159,10 +184,59 @@ function App() {
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   };
 
-  // -------- ADD SCHOLARSHIP (ADMIN) --------
+  const startApplication = (scholarshipId) => {
+    if (!currentUser) return;
+    if (
+      applications.some(
+        (a) => a.studentId === currentUser.email && a.scholarshipId === scholarshipId
+      )
+    ) {
+      alert("Already applied for this scholarship.");
+      return;
+    }
+    setApplicationForm({
+      scholarshipId,
+      course: "",
+      institute: "",
+      bankAccount: "",
+      ifsc: "",
+    });
+    setShowApplyForm(true);
+  };
+
+  const submitApplication = (e) => {
+    e.preventDefault();
+    if (!applicationForm.course || !applicationForm.institute) {
+      alert("Please fill course and institute.");
+      return;
+    }
+    setApplications([
+      ...applications,
+      {
+        id: Date.now(),
+        studentId: currentUser.email,
+        scholarshipId: applicationForm.scholarshipId,
+        status: "Pending",
+        course: applicationForm.course,
+        institute: applicationForm.institute,
+        bankAccount: applicationForm.bankAccount,
+        ifsc: applicationForm.ifsc,
+      },
+    ]);
+    setShowApplyForm(false);
+    alert("Application submitted!");
+  };
+
+  // -------- ADMIN: ADD SCHOLARSHIP --------
   const addScholarship = (e) => {
     e.preventDefault();
-    if (!newScholarship.name || !newScholarship.amount || !newScholarship.deadline) {
+    if (
+      !newScholarship.name ||
+      !newScholarship.amount ||
+      !newScholarship.deadline ||
+      !newScholarship.department ||
+      !newScholarship.level
+    ) {
       alert("Fill all fields");
       return;
     }
@@ -173,17 +247,49 @@ function App() {
         name: newScholarship.name,
         amount: Number(newScholarship.amount),
         deadline: newScholarship.deadline,
+        department: newScholarship.department,
+        level: newScholarship.level,
       },
     ]);
-    setNewScholarship({ name: "", amount: "", deadline: "" });
+    setNewScholarship({
+      name: "",
+      amount: "",
+      deadline: "",
+      department: "",
+      level: "",
+    });
   };
 
-  // -------- UPDATE APPLICATION STATUS (ADMIN) --------
+  // -------- ADMIN: UPDATE APPLICATION STATUS --------
   const updateStatus = (appId, status) => {
     setApplications((prev) =>
       prev.map((a) => (a.id === appId ? { ...a, status } : a))
     );
   };
+
+  // -------- ADMIN: PUBLISH ANNOUNCEMENT --------
+  const publishAnnouncement = (e) => {
+    e.preventDefault();
+    if (!newAnnouncement.title || !newAnnouncement.date) {
+      alert("Please add title and date.");
+      return;
+    }
+    setAnnouncements([
+      ...announcements,
+      { id: Date.now(), ...newAnnouncement },
+    ]);
+    setNewAnnouncement({ title: "", date: "", content: "" });
+  };
+
+  // -------- FILTERED SCHOLARSHIPS --------
+  const filteredScholarships = scholarships.filter((s) => {
+    const matchDept = filterDept ? s.department === filterDept : true;
+    const matchLevel = filterLevel ? s.level === filterLevel : true;
+    const matchSearch = search
+      ? s.name.toLowerCase().includes(search.toLowerCase())
+      : true;
+    return matchDept && matchLevel && matchSearch;
+  });
 
   return (
     <div className="app-shell">
@@ -204,7 +310,7 @@ function App() {
                 className={page === "student" ? "active" : ""}
                 onClick={() => setPage("student")}
               >
-                My Dashboard
+                Scholarship List
               </li>
               <li
                 className={page === "profile" ? "active" : ""}
@@ -212,15 +318,41 @@ function App() {
               >
                 My Profile
               </li>
-              {currentUser.role === "admin" && (
-                <li
-                  className={page === "admin" ? "active" : ""}
-                  onClick={() => setPage("admin")}
-                >
-                  Admin Panel
-                </li>
-              )}
             </>
+          )}
+
+          <li
+            className={page === "announcements" ? "active" : ""}
+            onClick={() => setPage("announcements")}
+          >
+            Announcements
+          </li>
+          <li
+            className={page === "howto" ? "active" : ""}
+            onClick={() => setPage("howto")}
+          >
+            How to Apply
+          </li>
+          <li
+            className={page === "faqs" ? "active" : ""}
+            onClick={() => setPage("faqs")}
+          >
+            FAQs
+          </li>
+          <li
+            className={page === "about" ? "active" : ""}
+            onClick={() => setPage("about")}
+          >
+            About Portal
+          </li>
+
+          {currentUser && currentUser.role === "admin" && (
+            <li
+              className={page === "admin" ? "active" : ""}
+              onClick={() => setPage("admin")}
+            >
+              Admin Panel
+            </li>
           )}
         </ul>
       </aside>
@@ -241,7 +373,7 @@ function App() {
             {currentUser && (
               <>
                 <span className="user-chip">{currentUser.email}</span>
-                <button onClick={() => setPage("student")}>Dashboard</button>
+                <button onClick={() => setPage("student")}>Scholarships</button>
                 <button onClick={handleLogout} className="logout-btn">
                   Logout
                 </button>
@@ -307,61 +439,169 @@ function App() {
           {page === "welcome" && !currentUser && (
             <div className="welcome-card">
               <h2>Welcome to the Scholarship Portal</h2>
-              <p>Please register or login to continue.</p>
+              <p>
+                View available scholarships, apply online, and track your
+                application status through this unified portal.
+              </p>
             </div>
           )}
 
-          {/* STUDENT PAGE */}
+          {/* STUDENT SCHOLARSHIP LIST + MY APPLICATIONS */}
           {page === "student" && currentUser && (
             <>
-              <h2 className="section-title">Available Scholarships</h2>
-              <div className="table-container">
-                <table className="styled-table">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Name</th>
-                      <th>Amount</th>
-                      <th>Deadline</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {scholarships.map((s, index) => {
-                      const daysLeft = calculateDaysLeft(s.deadline);
-                      const isExpired = daysLeft < 0;
-                      const alreadyApplied = applications.some(
-                        (a) =>
-                          a.studentId === currentUser.email &&
-                          a.scholarshipId === s.id
-                      );
-                      return (
-                        <tr key={s.id} className={isExpired ? "expired" : ""}>
-                          <td>{index + 1}</td>
-                          <td>{s.name}</td>
-                          <td>${s.amount}</td>
-                          <td>
-                            {s.deadline} {!isExpired && `(${daysLeft}d left)`}
-                          </td>
-                          <td>
-                            <button
-                              className="apply-btn"
-                              disabled={isExpired || alreadyApplied}
-                              onClick={() => applyForScholarship(s.id)}
-                            >
-                              {alreadyApplied
-                                ? "Applied"
-                                : isExpired
-                                ? "Closed"
-                                : "Apply"}
-                            </button>
-                          </td>
+              <div className="student-layout">
+                {/* Left filter panel */}
+                <aside className="student-filters">
+                  <h3>Filter Scholarships</h3>
+                  <select
+                    value={filterDept}
+                    onChange={(e) => setFilterDept(e.target.value)}
+                  >
+                    <option value="">All Departments</option>
+                    <option value="Higher Education">Higher Education</option>
+                    <option value="ST & SC Dev.">ST & SC Dev.</option>
+                  </select>
+                  <select
+                    value={filterLevel}
+                    onChange={(e) => setFilterLevel(e.target.value)}
+                  >
+                    <option value="">All Levels</option>
+                    <option value="UG">UG</option>
+                    <option value="PG">PG</option>
+                  </select>
+                  <input
+                    type="text"
+                    placeholder="Search scheme name"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </aside>
+
+                {/* Right scholarship table */}
+                <section className="student-scholarships">
+                  <h2 className="section-title">Scholarship List</h2>
+                  <div className="table-container">
+                    <table className="styled-table">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Scheme Name</th>
+                          <th>Department</th>
+                          <th>Level</th>
+                          <th>Amount</th>
+                          <th>Last Date</th>
+                          <th>Action</th>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      </thead>
+                      <tbody>
+                        {filteredScholarships.map((s, index) => {
+                          const daysLeft = calculateDaysLeft(s.deadline);
+                          const isExpired = daysLeft < 0;
+                          const alreadyApplied = applications.some(
+                            (a) =>
+                              a.studentId === currentUser.email &&
+                              a.scholarshipId === s.id
+                          );
+                          return (
+                            <tr key={s.id} className={isExpired ? "expired" : ""}>
+                              <td>{index + 1}</td>
+                              <td>{s.name}</td>
+                              <td>{s.department}</td>
+                              <td>{s.level}</td>
+                              <td>₹{s.amount}</td>
+                              <td>
+                                {s.deadline} {!isExpired && `(${daysLeft}d left)`}
+                              </td>
+                              <td>
+                                <button
+                                  className="apply-btn"
+                                  disabled={isExpired || alreadyApplied}
+                                  onClick={() => startApplication(s.id)}
+                                >
+                                  {alreadyApplied
+                                    ? "Applied"
+                                    : isExpired
+                                    ? "Closed"
+                                    : "Apply"}
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        {filteredScholarships.length === 0 && (
+                          <tr>
+                            <td colSpan="7">No scholarships match your filters.</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
               </div>
+
+              {/* Apply form card */}
+              {showApplyForm && (
+                <div className="apply-form-card">
+                  <h3>Application Details</h3>
+                  <form onSubmit={submitApplication}>
+                    <input
+                      type="text"
+                      placeholder="Course / Program"
+                      value={applicationForm.course}
+                      onChange={(e) =>
+                        setApplicationForm({
+                          ...applicationForm,
+                          course: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                    <input
+                      type="text"
+                      placeholder="Institute Name"
+                      value={applicationForm.institute}
+                      onChange={(e) =>
+                        setApplicationForm({
+                          ...applicationForm,
+                          institute: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                    <input
+                      type="text"
+                      placeholder="Bank Account Number (optional)"
+                      value={applicationForm.bankAccount}
+                      onChange={(e) =>
+                        setApplicationForm({
+                          ...applicationForm,
+                          bankAccount: e.target.value,
+                        })
+                      }
+                    />
+                    <input
+                      type="text"
+                      placeholder="IFSC Code (optional)"
+                      value={applicationForm.ifsc}
+                      onChange={(e) =>
+                        setApplicationForm({
+                          ...applicationForm,
+                          ifsc: e.target.value,
+                        })
+                      }
+                    />
+                    <div className="apply-form-actions">
+                      <button
+                        type="button"
+                        onClick={() => setShowApplyForm(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button type="submit">Submit Application</button>
+                    </div>
+                  </form>
+                </div>
+              )}
 
               {/* My Applications list */}
               <h2 className="section-title">My Applications</h2>
@@ -371,6 +611,8 @@ function App() {
                     <tr>
                       <th>#</th>
                       <th>Scholarship</th>
+                      <th>Course</th>
+                      <th>Institute</th>
                       <th>Status</th>
                     </tr>
                   </thead>
@@ -385,6 +627,8 @@ function App() {
                           <tr key={a.id}>
                             <td>{index + 1}</td>
                             <td>{s?.name || "Unknown"}</td>
+                            <td>{a.course || "-"}</td>
+                            <td>{a.institute || "-"}</td>
                             <td>
                               <span
                                 className={
@@ -401,6 +645,14 @@ function App() {
                           </tr>
                         );
                       })}
+                    {applications.filter((a) => a.studentId === currentUser.email)
+                      .length === 0 && (
+                      <tr>
+                        <td colSpan="5">
+                          You have not applied for any scholarships yet.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -425,11 +677,117 @@ function App() {
             </div>
           )}
 
+          {/* ANNOUNCEMENTS PAGE */}
+          {page === "announcements" && (
+            <div>
+              <h2 className="section-title">Announcements</h2>
+              <div className="table-container">
+                <table className="styled-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Date</th>
+                      <th>Title</th>
+                      <th>Details</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {announcements.map((a, index) => (
+                      <tr key={a.id}>
+                        <td>{index + 1}</td>
+                        <td>{a.date}</td>
+                        <td>{a.title}</td>
+                        <td>{a.content || "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* HOW TO APPLY PAGE */}
+          {page === "howto" && (
+            <div className="info-card">
+              <h2 className="section-title">How to Apply</h2>
+              <ol className="steps-list">
+                <li>Register on the portal and create your applicant account.</li>
+                <li>Login and open the “Scholarship List” page.</li>
+                <li>Filter and select a suitable scholarship scheme.</li>
+                <li>
+                  Click “Apply” and fill course, institute, and bank details carefully.
+                </li>
+                <li>Review your information and submit the application.</li>
+                <li>Track the status under “My Applications”.</li>
+              </ol>
+              <p className="info-note">
+                Keep scanned copies of Aadhaar, income certificate, caste
+                certificate, and previous marksheets ready before applying.
+              </p>
+            </div>
+          )}
+
+          {/* FAQ PAGE */}
+          {page === "faqs" && (
+            <div className="info-card">
+              <h2 className="section-title">Frequently Asked Questions</h2>
+              <div className="faq-item">
+                <h3>Who can apply for scholarships?</h3>
+                <p>
+                  Eligible students enrolled in approved institutions who satisfy
+                  the scheme’s academic, income, and category conditions can apply.
+                </p>
+              </div>
+              <div className="faq-item">
+                <h3>Can I apply for multiple scholarships?</h3>
+                <p>
+                  You may see multiple schemes, but some allow only one active
+                  scholarship at a time. Always read the scheme guidelines before
+                  applying.
+                </p>
+              </div>
+              <div className="faq-item">
+                <h3>How do I know if my application is approved?</h3>
+                <p>
+                  Check the “My Applications” page. Once verified by the institute
+                  and admin, the status will change from Pending to Approved or
+                  Rejected.
+                </p>
+              </div>
+              <div className="faq-item">
+                <h3>Can I edit my application after submitting?</h3>
+                <p>
+                  Edits are usually not allowed after final submission. If you
+                  submitted incorrect data, contact your institute or portal
+                  helpdesk.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ABOUT PAGE */}
+          {page === "about" && (
+            <div className="welcome-card">
+              <h2>About Scholarship Portal</h2>
+              <p>
+                This portal serves as a single-window system for students to
+                browse government and institutional scholarship schemes, apply
+                online, and track approvals.
+              </p>
+              <p>
+                Departments can publish schemes, verify student details, and
+                issue approvals digitally to ensure transparent and timely
+                disbursement of benefits.
+              </p>
+            </div>
+          )}
+
           {/* ADMIN PAGE */}
           {page === "admin" && currentUser && currentUser.role === "admin" && (
             <>
               <h2 className="section-title">Admin Panel</h2>
 
+              {/* Add scholarship */}
               <form className="admin-form" onSubmit={addScholarship}>
                 <h3>Add New Scholarship</h3>
                 <div className="admin-form-row">
@@ -462,10 +820,35 @@ function App() {
                       })
                     }
                   />
+                  <input
+                    type="text"
+                    placeholder="Department"
+                    value={newScholarship.department}
+                    onChange={(e) =>
+                      setNewScholarship({
+                        ...newScholarship,
+                        department: e.target.value,
+                      })
+                    }
+                  />
+                  <select
+                    value={newScholarship.level}
+                    onChange={(e) =>
+                      setNewScholarship({
+                        ...newScholarship,
+                        level: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="">Select Level</option>
+                    <option value="UG">UG</option>
+                    <option value="PG">PG</option>
+                  </select>
                   <button type="submit">Add Scholarship</button>
                 </div>
               </form>
 
+              {/* Applications list */}
               <h2 className="section-title">Requested Applications</h2>
               <div className="table-container">
                 <table className="styled-table">
@@ -474,6 +857,8 @@ function App() {
                       <th>#</th>
                       <th>Student</th>
                       <th>Scholarship</th>
+                      <th>Course</th>
+                      <th>Institute</th>
                       <th>Status</th>
                       <th>Change Status</th>
                     </tr>
@@ -488,6 +873,8 @@ function App() {
                           <td>{index + 1}</td>
                           <td>{a.studentId}</td>
                           <td>{s?.name || "Unknown"}</td>
+                          <td>{a.course || "-"}</td>
+                          <td>{a.institute || "-"}</td>
                           <td>
                             <span
                               className={
@@ -514,9 +901,55 @@ function App() {
                         </tr>
                       );
                     })}
+                    {applications.length === 0 && (
+                      <tr>
+                        <td colSpan="7">No applications submitted yet.</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
+
+              {/* Admin announcements */}
+              <h2 className="section-title">Announcements</h2>
+              <form className="admin-form" onSubmit={publishAnnouncement}>
+                <h3>Publish Announcement</h3>
+                <div className="admin-form-row">
+                  <input
+                    type="text"
+                    placeholder="Title"
+                    value={newAnnouncement.title}
+                    onChange={(e) =>
+                      setNewAnnouncement({
+                        ...newAnnouncement,
+                        title: e.target.value,
+                      })
+                    }
+                  />
+                  <input
+                    type="date"
+                    value={newAnnouncement.date}
+                    onChange={(e) =>
+                      setNewAnnouncement({
+                        ...newAnnouncement,
+                        date: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <textarea
+                  className="admin-textarea"
+                  placeholder="Details"
+                  value={newAnnouncement.content}
+                  onChange={(e) =>
+                    setNewAnnouncement({
+                      ...newAnnouncement,
+                      content: e.target.value,
+                    })
+                  }
+                />
+                <button type="submit">Publish</button>
+              </form>
             </>
           )}
 
